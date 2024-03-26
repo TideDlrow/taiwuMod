@@ -3,6 +3,8 @@ using GameData.Domains;
 using TaiwuModdingLib.Core.Plugin;
 using HarmonyLib;
 using GameData.Domains.Mod;
+using GameData.Domains.Extra;
+using GameData.Utilities;
 namespace Profession
 {
     [PluginConfig("ProfessionSeniorityBackend", "rhonin", "0.1.0")]
@@ -13,6 +15,8 @@ namespace Profession
         static bool fullPercentage = true;
         //增长的倍数
         static int increaseTimes = 1;
+        //无冷却
+        static bool noCoolTime = false;
         public override void Dispose()
         {
             if (harmony != null)
@@ -31,27 +35,43 @@ namespace Profession
             ModDomain modDomain = new ModDomain();
             modDomain.GetSetting(ModIdStr, "fullPercentage", ref fullPercentage);
             modDomain.GetSetting(ModIdStr, "increaseTimes", ref increaseTimes);
+            modDomain.GetSetting(ModIdStr, "NoCoolTime", ref noCoolTime);
         }
-        //把志向的进度改为最大值
-        [HarmonyPrefix, HarmonyPatch(typeof(GameData.Domains.Extra.ExtraDomain), "ChangeProfessionSeniority")]
+        
+        [HarmonyPrefix, HarmonyPatch(typeof(ExtraDomain), "ChangeProfessionSeniority")]
         public static bool ExtraDomain_ChangeProfessionSeniority(int professionId, ref int baseDelta)
         {
             ProfessionData professionData;
             bool flag = !DomainManager.Extra.TryGetElement_TaiwuProfessions(professionId, out professionData);
             if (!flag)
             {
-                
+
                 if (fullPercentage)
                 {
+                    //把志向的进度改为最大值
                     professionData.Seniority = ProfessionRelatedConstants.MaxSeniority;
                 }
                 else
                 {
+                    //把志向增长速度改为指定倍数
                     baseDelta = baseDelta * increaseTimes;
                 }
                 //AdaptableLog.Info("把id为：" + professionId + "的进度改成了：" + ProfessionRelatedConstants.MaxSeniority);
             }
             return true;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(ExtraDomain), nameof(ExtraDomain.ChangeProfession))]
+        public static void ExtraDomain_ChangeProfession_Post(Dictionary<int, ProfessionData> ____taiwuProfessions)
+        {
+            if (noCoolTime)
+            {
+                //把所有的志向冷却时间改为0
+                foreach (KeyValuePair<int, ProfessionData> keyValuePair in ____taiwuProfessions)
+                {
+                    ProfessionData professionData = keyValuePair.Value;
+                    professionData.ProfessionOffCooldownDate = 0;
+                }
+            }
         }
     }
 }
