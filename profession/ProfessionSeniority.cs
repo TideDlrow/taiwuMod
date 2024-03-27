@@ -15,8 +15,10 @@ namespace Profession
         static bool fullPercentage = true;
         //增长的倍数
         static int increaseTimes = 1;
-        //无冷却
+        //切换无冷却
         static bool noCoolTime = false;
+        //使用技能无冷却
+        static bool professionSkillNoCooldown = false;
         public override void Dispose()
         {
             if (harmony != null)
@@ -28,7 +30,6 @@ namespace Profession
         public override void Initialize()
         {
             harmony = Harmony.CreateAndPatchAll(typeof(ProfessionSeniorityBackendPlugin));
-            //AdaptableLog.Info("这是一个后端mod,Hello 太吾 backend");
         }
         public override void OnModSettingUpdate()
         {
@@ -36,6 +37,7 @@ namespace Profession
             modDomain.GetSetting(ModIdStr, "fullPercentage", ref fullPercentage);
             modDomain.GetSetting(ModIdStr, "increaseTimes", ref increaseTimes);
             modDomain.GetSetting(ModIdStr, "NoCoolTime", ref noCoolTime);
+            modDomain.GetSetting(ModIdStr, "professionSkillNoCooldown", ref professionSkillNoCooldown);
         }
         
         [HarmonyPrefix, HarmonyPatch(typeof(ExtraDomain), "ChangeProfessionSeniority")]
@@ -72,6 +74,12 @@ namespace Profession
                     professionData.ProfessionOffCooldownDate = 0;
                 }
             }
+        }
+        [HarmonyPrefix,HarmonyPatch(typeof(ProfessionData),nameof(ProfessionData.OfflineSkillCooldown))]
+        public static bool ProfessionData_OfflineSkillCooldown_Pre()
+        {
+            //直接跳过加冷却时间的方法，以达到技能无冷却的目的
+            return !professionSkillNoCooldown;
         }
     }
 }
