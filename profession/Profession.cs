@@ -5,9 +5,11 @@ using HarmonyLib;
 using GameData.Domains.Mod;
 using GameData.Domains.Extra;
 using GameData.Utilities;
+using GameData.Domains.Taiwu.Profession.SkillsData;
+using GameData.Domains.Combat;
 namespace Profession
 {
-    [PluginConfig("ProfessionSeniorityBackend", "rhonin", "0.1.0")]
+    [PluginConfig("ProfessionBackend", "rhonin", "0.4.0")]
     public class ProfessionSeniorityBackendPlugin : TaiwuRemakePlugin
     {
         Harmony? harmony;
